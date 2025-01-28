@@ -43,11 +43,12 @@ const main = async () => {
 
   client.once("ready", async () => {
     const channel = client.channels.cache.get(
-      "1330227198304587889"
+      process.env.TEST_CHANNEL!
     ) as TextChannel;
     await selectMenu.createBtn(channel);
   });
 
+  //セレクトメニューでの付与
   client.on(Events.InteractionCreate, async (interaction) => {
     if (!interaction.isStringSelectMenu()) return;
     if ((interaction as StringSelectMenuInteraction).customId === "contents") {
