@@ -3,20 +3,25 @@ import {
   GatewayIntentBits,
   Client,
   Partials,
-  Message,
-  SlashCommandBuilder,
   REST,
   Routes,
+  TextChannel,
+  ActionRowBuilder,
+  Events,
+  GuildMemberRoleManager,
+  StringSelectMenuBuilder,
+  StringSelectMenuInteraction,
+  MessageFlags,
 } from "discord.js";
-const main = () => {
+import { CommandManager } from "./commands/commandManager";
+import { SelectMenu } from "./selectMenu/selectMenu";
+const main = async () => {
   dotenv.config();
   const TOKEN = process.env.TOKEN;
   const SERVER_ID = process.env.SERVER_ID;
   const CLIENT_ID = process.env.CLIENT_ID;
 
-  const test = new SlashCommandBuilder().setName("test").setDescription("test");
-
-  const commands = [test.toJSON()];
+  const cm = new CommandManager();
 
   const client = new Client({
     intents: [
@@ -31,13 +36,34 @@ const main = () => {
 
   const rest = new REST({ version: "10" }).setToken(TOKEN!);
   rest.put(Routes.applicationGuildCommands(CLIENT_ID!, SERVER_ID!), {
-    body: commands,
+    body: cm.jsonArray(),
   });
 
-  client.once("ready", () => {
-    console.log("Ready!");
-    if (client.user) {
-      console.log(client.user.tag);
+  const selectMenu = new SelectMenu();
+
+  client.once("ready", async () => {
+    const channel = client.channels.cache.get(
+      "1330227198304587889"
+    ) as TextChannel;
+    await selectMenu.createBtn(channel);
+  });
+
+  client.on(Events.InteractionCreate, async (interaction) => {
+    if (!interaction.isStringSelectMenu()) return;
+    if ((interaction as StringSelectMenuInteraction).customId === "contents") {
+      try {
+        const roleStr = await selectMenu.roleAdd(interaction);
+        await interaction.reply({
+          content: `${roleStr}の付与に成功しました`,
+          flags: MessageFlags.Ephemeral,
+        });
+      } catch (_) {
+        await interaction.reply({
+          content: "付与に失敗",
+          flags: MessageFlags.Ephemeral,
+        });
+        console.log(_);
+      }
     }
   });
 
@@ -45,5 +71,5 @@ const main = () => {
 };
 
 (async () => {
-  main();
+  await main();
 })();
