@@ -69,7 +69,7 @@ const main = async () => {
       return;
     let msg: string | undefined;
     try {
-      msg = await selectMenu.roleAdd(interaction);
+      msg = await selectMenu.roleHandler(interaction);
     } catch (err) {
       console.log(err);
       msg = "付与に失敗しました";

@@ -52,22 +52,39 @@ export class SelectMenu {
       ],
     });
   }
-  public async roleAdd(
+
+  public async roleHandler(
     ir: StringSelectMenuInteraction
   ): Promise<string | undefined> {
     const guild = ir.client.guilds.cache.get(process.env.SERVER_ID!);
     if (!guild) return;
+    const member = ir.member as GuildMember;
+    const memberRoles = member?.roles as GuildMemberRoleManager;
+    for (const role of memberRoles.cache) {
+      const roles = role[1].name.split("\n");
+      if (roles.includes(ir.values[0]))
+        return await this.deleteRole(ir, role[1]);
+    }
+    return await this.addRole(ir);
+  }
+
+  private async deleteRole(
+    ir: StringSelectMenuInteraction,
+    role: Role
+  ): Promise<string> {
+    const member = ir.member as GuildMember;
+    const memberRoles = member?.roles as GuildMemberRoleManager;
+    await memberRoles.remove(role);
+    return `${role.name}を削除しました`;
+  }
+
+  private async addRole(
+    ir: StringSelectMenuInteraction
+  ): Promise<string | undefined> {
+    const guild = ir.client.guilds.cache.get(process.env.SERVER_ID!)!;
     const roles = guild.roles.cache;
     const member = ir.member as GuildMember;
     const memberRoles = member?.roles as GuildMemberRoleManager;
-
-    for (const role of memberRoles.cache) {
-      const r = role[1].name.split("\n");
-      if (r.includes(ir.values[0])) {
-        memberRoles.remove(role[0]);
-        return `"${ir.values[0]}"を取り消しました`;
-      }
-    }
 
     if (memberRoles === undefined || roles === undefined) return;
     for (const select of this.selects) {
@@ -76,7 +93,7 @@ export class SelectMenu {
           return e.name === select.option.value;
         });
         await select.roleAdd(role!, memberRoles);
-        return `"${select.option.value}"の付与に成功しました`;
+        return `"${select.option.value}"の付与しました`;
       }
     }
   }
