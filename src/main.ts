@@ -68,13 +68,6 @@ const main = async () => {
     if ((interaction as StringSelectMenuInteraction).customId !== "contents")
       return;
     let msg: string | undefined;
-    const roles = interaction.member?.roles as GuildMemberRoleManager;
-    for (const role of roles.cache) {
-      const r = role[1].name.split("\n");
-      if (r.includes(interaction.values[0])) {
-        roles.remove(role[0]);
-      }
-    }
     try {
       msg = await selectMenu.roleAdd(interaction);
     } catch (err) {
