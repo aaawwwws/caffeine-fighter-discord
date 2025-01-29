@@ -5,7 +5,7 @@ import {
   SelectMenuComponentOptionData,
 } from "discord.js";
 import { Option } from "./option";
-export class DD implements Option.Option {
+export class DeepDungeon implements Option.Option {
   private selectOption: SelectMenuComponentOptionData;
   constructor() {
     this.selectOption = {

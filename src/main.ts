@@ -12,6 +12,8 @@ import {
   StringSelectMenuBuilder,
   StringSelectMenuInteraction,
   MessageFlags,
+  ComponentType,
+  Role,
 } from "discord.js";
 import { CommandManager } from "./commands/commandManager";
 import { SelectMenu } from "./selectMenu/selectMenu";
@@ -41,31 +43,48 @@ const main = async () => {
 
   const selectMenu = new SelectMenu();
 
+  //セレクトメニューを生成
   client.once("ready", async () => {
     const channel = client.channels.cache.get(
       process.env.TEST_CHANNEL!
     ) as TextChannel;
-    await selectMenu.createBtn(channel);
+    //既にセレクトメニューがログに存在する場合はセレクトメニューを生成しない
+    const msgFetch = await channel.messages.fetch();
+    msgFetch.forEach((msg) => {
+      msg.components.forEach((cmp) => {
+        cmp.components.forEach(async (select) => {
+          if (select.type === ComponentType.StringSelect) {
+            return;
+          }
+          await selectMenu.createBtn(channel);
+        });
+      });
+    });
   });
 
-  //セレクトメニューでの付与
+  //セレクトメニューでのロール付与
   client.on(Events.InteractionCreate, async (interaction) => {
     if (!interaction.isStringSelectMenu()) return;
-    if ((interaction as StringSelectMenuInteraction).customId === "contents") {
-      try {
-        const roleStr = await selectMenu.roleAdd(interaction);
-        await interaction.reply({
-          content: `${roleStr}の付与に成功しました`,
-          flags: MessageFlags.Ephemeral,
-        });
-      } catch (_) {
-        await interaction.reply({
-          content: "付与に失敗",
-          flags: MessageFlags.Ephemeral,
-        });
-        console.log(_);
+    if ((interaction as StringSelectMenuInteraction).customId !== "contents")
+      return;
+    let msg: string | undefined;
+    const roles = interaction.member?.roles as GuildMemberRoleManager;
+    for (const role of roles.cache) {
+      const r = role[1].name.split("\n");
+      if (r.includes(interaction.values[0])) {
+        roles.remove(role[0]);
       }
     }
+    try {
+      msg = await selectMenu.roleAdd(interaction);
+    } catch (err) {
+      console.log(err);
+      msg = "付与に失敗しました";
+    }
+    await interaction.reply({
+      content: msg,
+      flags: MessageFlags.Ephemeral,
+    });
   });
 
   client.login(TOKEN!);

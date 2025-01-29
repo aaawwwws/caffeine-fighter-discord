@@ -11,12 +11,12 @@ import {
 import { Option } from "./options/option";
 import { Beginner } from "./options/beginner";
 import { Crafter } from "./options/crafter";
-import { DD } from "./options/dd";
+import { DeepDungeon } from "./options/deepDungeon";
 import { HighDifficulty } from "./options/highDifficulty";
-import { IsLand } from "./options/island";
+import { IsLand } from "./options/isLand";
 import { Mahjonng } from "./options/mahjong";
 import { PvP } from "./options/pvp";
-import { SS } from "./options/ss";
+import { ScreenShot } from "./options/screenShot";
 import { Treasure } from "./options/Treasure";
 
 export class SelectMenu {
@@ -25,18 +25,19 @@ export class SelectMenu {
     this.selects = [
       new Beginner(),
       new Crafter(),
-      new DD(),
+      new DeepDungeon(),
       new HighDifficulty(),
       new IsLand(),
       new Mahjonng(),
       new PvP(),
-      new SS(),
+      new ScreenShot(),
       new Treasure(),
     ];
   }
   public async createBtn(channel: TextChannel): Promise<void> {
     await channel.send({
-      content: "",
+      content:
+        "好きなコンテンツがあれば以下よりご選択ください!\n以下ロールが付与されメンションを飛ばすことも可能なので、\n好きなコンテンツ同士のプレイヤーへ呼びかけることが可能です!",
       components: [
         new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
           new StringSelectMenuBuilder()
@@ -59,6 +60,15 @@ export class SelectMenu {
     const roles = guild.roles.cache;
     const member = ir.member as GuildMember;
     const memberRoles = member?.roles as GuildMemberRoleManager;
+
+    for (const role of memberRoles.cache) {
+      const r = role[1].name.split("\n");
+      if (r.includes(ir.values[0])) {
+        memberRoles.remove(role[0]);
+        return `"${ir.values[0]}"を取り消しました`;
+      }
+    }
+
     if (memberRoles === undefined || roles === undefined) return;
     for (const select of this.selects) {
       if (ir.values[0] === select.option.value) {
@@ -66,7 +76,7 @@ export class SelectMenu {
           return e.name === select.option.value;
         });
         await select.roleAdd(role!, memberRoles);
-        return select.option.value;
+        return `"${select.option.value}"の付与に成功しました`;
       }
     }
   }
